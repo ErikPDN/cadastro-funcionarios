@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 
 public class ClienteTcp {
     private static final String HOST = "localhost";
-    private static final int PORT = 12345;
+    private static final int PORT = 5000;
 
     public static void main(String[] args) throws IOException {
         try (Socket socket = new Socket(HOST, PORT);
@@ -37,7 +37,7 @@ public class ClienteTcp {
 
                         System.out.print(input.readLine()); // Salário
                         output.println(keyboard.readLine());
-                        
+
                         System.out.println();
                     }
                     case "2" -> {

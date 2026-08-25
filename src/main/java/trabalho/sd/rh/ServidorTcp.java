@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ServidorTcp {
-    private static final int PORT = 12345;
+    private static final int PORT = 5000;
     private static final int THREAD_POOL_SIZE = 10;
     private static final List<Funcionario> funcionarios = new ArrayList<>();
 
