@@ -26,8 +26,7 @@ public class ServidorTcp {
 
             while (true) {
                 Socket clientSocket = server.accept();
-                Funcionario funcionario = new Funcionario();
-                pool.submit(() -> handleClient(clientSocket, funcionario));
+                pool.submit(() -> handleClient(clientSocket));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -36,7 +35,7 @@ public class ServidorTcp {
         }
     }
 
-    private static void handleClient(Socket clientSocket, Funcionario funcionario) {
+    private static void handleClient(Socket clientSocket) {
         try (clientSocket;
             BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
             PrintWriter output = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8), true)
@@ -48,15 +47,16 @@ public class ServidorTcp {
                 
                 switch (option) {
                     case "1" -> { 
-                        output.println("Digite o nome do funcionário:");
+                        output.println("Digite o nome do funcionário: ");
                         String nome = input.readLine();
 
-                        output.println("Digite o cargo do funcionário:");
+                        output.println("Digite o cargo do funcionário: ");
                         String cargo = input.readLine();
 
-                        output.println("Digite o salário do funcionário:");
+                        output.println("Digite o salário do funcionário: ");
                         double salario = Double.parseDouble(input.readLine());
-
+                        
+                        Funcionario funcionario = new Funcionario();
                         funcionario.cadastrarFuncionario(nome, cargo, salario);
                         funcionarios.add(funcionario);
                     }
@@ -66,7 +66,6 @@ public class ServidorTcp {
                             output.println(f);
                             
                         }
-                        output.println();
                         output.println("END"); // Indica fim da lista
                     }
                     case "3" -> running = false;

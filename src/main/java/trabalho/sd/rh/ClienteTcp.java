@@ -19,36 +19,40 @@ public class ClienteTcp {
         try (Socket socket = new Socket(HOST, PORT);
              BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
              PrintWriter output = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
-             BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in))
+             BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))
         ) {
            boolean running = true;
            while (running) {
                 showOptions();
-                String option = consoleInput.readLine();
+                String option = keyboard.readLine();
                 output.println(option);
 
                 switch (option) {
                     case "1" -> {
                         System.out.print(input.readLine()); // Nome
-                        output.println(consoleInput.readLine());
+                        output.println(keyboard.readLine());
 
                         System.out.print(input.readLine()); // Cargo
-                        output.println(consoleInput.readLine());
+                        output.println(keyboard.readLine());
 
                         System.out.print(input.readLine()); // Salário
-                        output.println(consoleInput.readLine());
+                        output.println(keyboard.readLine());
+                        
+                        System.out.println();
                     }
                     case "2" -> {
                         String response;
                         while (!(response = input.readLine()).equals("END")) {
                             System.out.println(response);
                         }
+                        System.out.println();
                     }
                     case "3" -> {
                         running = false;
                     }
                     default -> {
                         System.out.println("Opção inválida. Tente novamente.");
+                        System.out.println();
                     }
                 }
            }
