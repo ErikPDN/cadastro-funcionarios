@@ -23,6 +23,18 @@ public class Funcionario {
         this.salario = salario;
     }
 
+    public String getNome() {
+        return nome;
+    }
+
+    public String getCargo() {
+        return cargo;
+    }
+
+    public double getSalario() {
+        return salario;
+    }
+
     @Override
     public String toString() {
         return "{ " + nome + ", " + cargo + ", R$ " + salario + " }";

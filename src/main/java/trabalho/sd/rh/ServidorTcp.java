@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -16,11 +17,11 @@ import java.util.concurrent.Executors;
 public class ServidorTcp {
     private static final int PORT = 5000;
     private static final int THREAD_POOL_SIZE = 10;
-    private static final List<Funcionario> funcionarios = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
+        ConexaoDB.inicializarBanco();
         ExecutorService pool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-
+     
         try (ServerSocket server = new ServerSocket(PORT)) {
             System.out.println("Servidor TCP iniciado na porta " + PORT);
 
@@ -47,26 +48,37 @@ public class ServidorTcp {
                 
                 switch (option) {
                     case "1" -> { 
-                        output.println("Digite o nome do funcionário: ");
-                        String nome = input.readLine();
+                        try {
+                            output.println("Digite o nome do funcionário: ");
+                            String nome = input.readLine();
 
-                        output.println("Digite o cargo do funcionário: ");
-                        String cargo = input.readLine();
+                            output.println("Digite o cargo do funcionário: ");
+                            String cargo = input.readLine();
 
-                        output.println("Digite o salário do funcionário: ");
-                        double salario = Double.parseDouble(input.readLine());
-                        
-                        Funcionario funcionario = new Funcionario();
-                        funcionario.cadastrarFuncionario(nome, cargo, salario);
-                        funcionarios.add(funcionario);
+                            output.println("Digite o salário do funcionário: ");
+                            double salario = Double.parseDouble(input.readLine());
+                            
+                            FuncionarioDAO funcionarioDAO = new FuncionarioDAO();
+                            Funcionario funcionario = new Funcionario(nome, cargo, salario);
+                            funcionarioDAO.cadastrarFuncionario(funcionario);
+                        } catch (SQLException e) {
+                            output.println("Erro ao cadastrar funcionário: " + e.getMessage());
+                        }
+                        output.println("Funcionário cadastrado com sucesso!");
                     }
                     case "2" -> {
-                        output.println("Lista de funcionários:");
-                        for (Funcionario f : funcionarios) {
-                            output.println(f);
-                            
+                        try {
+                            FuncionarioDAO funcionarioDAO = new FuncionarioDAO();
+                            List<Funcionario> funcionarios = funcionarioDAO.listarFuncionarios();
+                            output.println("Lista de funcionários:");
+                            for (Funcionario f : funcionarios) {
+                                output.println(f);
+                            }
+                            output.println("END"); // Indica fim da lista
+                        } catch (SQLException e) {
+                            output.println("Erro ao listar funcionários: " + e.getMessage());
                         }
-                        output.println("END"); // Indica fim da lista
+                        
                     }
                     case "3" -> running = false;
                     default -> output.println("Opção inválida. Tente novamente.");
