@@ -1,0 +1,25 @@
+syntax = "proto3";
+package funcionarios;
+
+option java_multiple_files = true;
+option java_package = "trabalho.sd.rh.grpc";
+option java_outer_classname = "FuncionarioServiceProto";
+
+service FuncionarioService {
+    rpc Cadastrar(FuncionarioRequest) returns (FuncionarioResponse);
+    rpc Listar(Empty) returns (stream FuncionarioResponse);
+}
+
+message FuncionarioRequest {
+    string nome = 1;
+    string cargo = 2;
+    double salario = 3;
+}
+
+message FuncionarioResponse {
+    string nome = 1;
+    string cargo = 2;
+    double salario = 3;
+}
+
+message Empty {}

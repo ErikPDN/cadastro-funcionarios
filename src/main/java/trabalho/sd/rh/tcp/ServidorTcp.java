@@ -1,4 +1,4 @@
-package trabalho.sd.rh;
+package trabalho.sd.rh.tcp;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,10 +9,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import trabalho.sd.rh.ConexaoDB;
+import trabalho.sd.rh.Funcionario;
+import trabalho.sd.rh.FuncionarioDAO;
 
 public class ServidorTcp {
     private static final int PORT = 5000;

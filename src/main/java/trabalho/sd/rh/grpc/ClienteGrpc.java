@@ -1,0 +1,71 @@
+package trabalho.sd.rh.grpc;
+
+import java.util.Iterator;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+
+import trabalho.sd.rh.grpc.*;
+
+public class ClienteGrpc {
+    private static final String HOST = "localhost";
+    private static final int PORT = 9090;
+
+    public static void main(String[] args) throws InterruptedException {
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(HOST, PORT)
+            .usePlaintext()
+            .build();
+        
+        FuncionarioServiceGrpc.FuncionarioServiceBlockingStub stub = FuncionarioServiceGrpc.newBlockingStub(channel);
+        
+        try (Scanner scanner = new Scanner(System.in)) {
+            boolean running = true;
+            while (running) {
+                showOptions();
+                String option = scanner.nextLine();
+
+                switch(option) {
+                    case "1" -> {
+                        System.out.print("Digite o nome do funcionário: ");
+                        String nome = scanner.nextLine();
+
+                        System.out.print("Digite o cargo do funcionário: ");
+                        String cargo = scanner.nextLine();
+
+                        System.out.print("Digite o salário do funcionário: ");
+                        double salario = Double.parseDouble(scanner.nextLine());
+
+                        FuncionarioResponse response = stub.cadastrar(FuncionarioRequest.newBuilder()
+                            .setNome(nome)
+                            .setCargo(cargo)
+                            .setSalario(salario)
+                            .build());
+                        
+                        System.out.println("Funcionário " + response.getNome() + " cadastrado com sucesso!");
+                    }
+                    case "2" -> {
+                        Iterator<FuncionarioResponse> it = stub.listar(Empty.newBuilder().build());
+                        it.forEachRemaining(funcionario -> {
+                            System.out.println("{ Nome: " + funcionario.getNome() + ", Cargo: " + funcionario.getCargo() + ", Salário: " + funcionario.getSalario() + " }");
+                        });
+                        System.out.println();
+                    }
+                    case "3" -> running = false;
+                    default -> System.out.println("Opção inválida. Tente novamente.");
+                }
+            }
+        } finally {
+            channel.shutdown().awaitTermination(3, TimeUnit.SECONDS);
+        }
+    }
+
+    private static void showOptions() {
+        System.out.println("Escolha uma opção:");
+        System.out.println("1. Cadastrar funcionário");
+        System.out.println("2. Listar funcionários");
+        System.out.println("3. Sair");
+    }
+}
