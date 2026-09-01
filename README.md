@@ -1,8 +1,18 @@
 # Cadastro de Funcionários
 
-Aplicação cliente-servidor TCP para cadastro e listagem de funcionários, com
-persistência em PostgreSQL. O servidor é multi-thread (pool de 10 threads) e
-atende múltiplos clientes simultaneamente.
+Aplicação cliente-servidor para cadastro e listagem de funcionários, com
+persistência em PostgreSQL. O projeto traz **duas implementações equivalentes**
+da mesma funcionalidade, para fins de comparação (disciplina de Sistemas
+Distribuídos):
+
+- **TCP puro** (`trabalho.sd.rh.tcp`) — sockets `Socket`/`ServerSocket` com
+  protocolo textual próprio, servidor multi-thread (pool de 10 threads).
+- **gRPC** (`trabalho.sd.rh.grpc`) — serviço definido em
+  [`funcionario.proto`](src/main/proto/funcionario.proto), com RPC unário para
+  cadastro e RPC de streaming de servidor para listagem.
+
+Ambas usam a mesma camada de domínio/persistência (`Funcionario`,
+`FuncionarioDAO`, `ConexaoDB`).
 
 ## Pré-requisitos
 
@@ -41,15 +51,14 @@ psql -U postgres -c "ALTER USER postgres PASSWORD 'postgres';"
 
 ### 3. Tabela
 
-A tabela `funcionarios` é criada automaticamente na inicialização do servidor, a
-partir de [`src/main/resources/db/schema.sql`](src/main/resources/db/schema.sql)
-(`CREATE TABLE IF NOT EXISTS`, ou seja, é seguro rodar várias vezes).
+A tabela `funcionarios` é criada automaticamente ao iniciar o **servidor TCP**
+(`ConexaoDB.inicializarBanco()`), a partir de
+[`src/main/resources/db/schema.sql`](src/main/resources/db/schema.sql)
+(`CREATE TABLE IF NOT EXISTS`, seguro rodar várias vezes).
 
-Para aplicá-la manualmente, se quiser:
-
-```bash
-psql -U postgres -d funcionarios -f src/main/resources/db/schema.sql
-```
+> ```bash
+> psql -U postgres -d funcionarios -f src/main/resources/db/schema.sql
+> ```
 
 ## Compilando o projeto
 
@@ -59,31 +68,50 @@ Na raiz do projeto:
 mvn compile
 ```
 
+Esse comando também gera, a partir do `.proto`, as classes Java do gRPC em
+`target/generated-sources/protobuf/` (mensagens, stubs de cliente e a classe
+base do serviço).
+
 ## Executando
 
 São necessários dois terminais: um para o servidor e outro para o cliente.
+Cliente e servidor precisam ser da **mesma implementação** (os dois TCP, ou os
+dois gRPC).
 
-### 1. Iniciar o servidor
+### Opção 1 — TCP puro
 
-```bash
-mvn exec:java -Dexec.mainClass="trabalho.sd.rh.ServidorTcp"
-```
-
-O servidor valida a conexão com o banco, cria a tabela se necessário, sobe na
-porta `5000` e fica aguardando conexões. Se o banco não estiver acessível, o
-servidor encerra com erro sem abrir a porta.
-
-### 2. Iniciar o cliente
+**Servidor** (porta `5000`):
 
 ```bash
-mvn exec:java -Dexec.mainClass="trabalho.sd.rh.ClienteTcp"
+mvn exec:java -Dexec.mainClass="trabalho.sd.rh.tcp.ServidorTcp"
 ```
 
-O cliente conecta em `localhost:5000`.
+Valida a conexão com o banco, cria a tabela se necessário e sobe a porta. Se o
+banco não estiver acessível, encerra com erro sem abrir a porta.
 
-### 3. Usando o cliente
+**Cliente** (conecta em `localhost:5000`):
 
-Ao conectar, o cliente exibe um menu com as opções:
+```bash
+mvn exec:java -Dexec.mainClass="trabalho.sd.rh.tcp.ClienteTcp"
+```
+
+### Opção 2 — gRPC
+
+**Servidor** (porta `9090`):
+
+```bash
+mvn exec:java -Dexec.mainClass="trabalho.sd.rh.grpc.ServidorGrpc"
+```
+
+**Cliente** (conecta em `localhost:9090`):
+
+```bash
+mvn exec:java -Dexec.mainClass="trabalho.sd.rh.grpc.ClienteGrpc"
+```
+
+### Usando o cliente
+
+Em ambas as versões, o cliente exibe um menu com as opções:
 
 1. **Cadastrar funcionário** — solicita nome, cargo e salário.
 2. **Listar funcionários** — exibe todos os funcionários cadastrados no servidor.
@@ -92,14 +120,21 @@ Ao conectar, o cliente exibe um menu com as opções:
 ## Estrutura do projeto
 
 ```text
+src/main/proto/
+└── funcionario.proto         # Contrato do serviço gRPC (mensagens + RPCs)
+
 src/main/java/trabalho/sd/rh/
-├── ServidorTcp.java      # Servidor TCP multi-thread
-├── ClienteTcp.java       # Cliente TCP interativo
-├── ConexaoDB.java        # Fábrica de conexões JDBC + inicialização do schema
-├── FuncionarioDAO.java   # Operações de persistência (INSERT / SELECT)
-└── Funcionario.java      # Modelo de funcionário
+├── tcp/
+│   ├── ServidorTcp.java       # Servidor TCP multi-thread
+│   └── ClienteTcp.java        # Cliente TCP interativo
+├── grpc/
+│   ├── ServidorGrpc.java      # Servidor gRPC
+│   ├── ClienteGrpc.java       # Cliente gRPC interativo (stub bloqueante)
+│   └── FuncionarioServiceImpl.java  # Implementação do serviço (usa FuncionarioDAO)
+├── ConexaoDB.java             # Fábrica de conexões JDBC + inicialização do schema
+├── FuncionarioDAO.java        # Operações de persistência (INSERT / SELECT)
+└── Funcionario.java           # Modelo de funcionário
 
 src/main/resources/
-└── db/schema.sql         # DDL da tabela funcionarios
-
+└── db/schema.sql              # DDL da tabela funcionarios
 ```
